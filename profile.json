@@ -183,7 +183,7 @@
   },
   "request_params": {
     "PERSONALITY": {
-      "model_name": "https://openrouter.ai/meta-llama/llama-3-70b-instruct:nitro",
+      "model_name": "meta-llama/llama-3-70b-instruct:nitro",
       "max_tokens": 4000,
       "temperature": 0.3
     },
