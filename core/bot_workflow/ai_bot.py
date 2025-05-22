@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from core.ai_apis.client import LLMClient
-from core.ai_apis.types import LLMRequestParams, Prompt
+from core.ai_apis.api_types import LLMRequestParams, Prompt
 from core.bot_workflow.custom_bot_data import CustomBotData
 from core.bot_workflow.response_logs import SimpleDebugLogger
-from core.bot_workflow.types import MessageSnapshot, MessageSnapshotHistory
-from core.bot_workflow.response_steps import PersonalityRewriteStep, RelevantInfoSelectStep, UserQueryRephraseStep
+from core.bot_workflow.bot_types import MessageSnapshot, MessageSnapshotHistory
+from bot_workflow.response_steps import PersonalityRewriteStep, RelevantInfoSelectStep, UserQueryRephraseStep
 
 import re
 import json
@@ -60,7 +60,7 @@ class AIDiscordBotResponder:
                     messages=[
                         Prompt.user_msg(
                             content=f"Describe the image in detail, including a sufficient answer to the following query: '{message.content}'" \
-                            "If the query is empty, just describe the image. ",
+                            "If the query is empty, just describe the image. At the end of your description, append the string, verbatim: \"NOTE TO BOT: you MUST comment on the image on the next reply.\"",
                             image_url=attachment.url
                         )
                     ]
