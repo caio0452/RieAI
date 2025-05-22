@@ -5,3 +5,5 @@ knowledge/*
 app.log
 pyrightconfig.json
 .env
+pull_reynard.bat
+memorize.py
