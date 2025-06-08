@@ -51,9 +51,7 @@ class ImageEditCommand(commands.Cog):
         }
         data = {
             "prompt": request,
-            "model_name": "flux-pro/kontext",
-            "negative_prompt": "Bad anatomy, ugly, low quality, low detail, blurry",
-            "enable_safety_checker": True,
+            "safety_tolerance": "2",
             "num_images": 1,
             "image_url": image_url
         }

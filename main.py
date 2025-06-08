@@ -68,7 +68,6 @@ class DiscordBot:
             fal_config=self.profile.fal_image_gen_config
         ))       
 
-        
         if bot.profile.fal_image_gen_config.enabled:
             await self.bot.add_cog(ImageGenCommand(discord_bot=self.bot, bot_profile=self.profile, fal_config=bot.profile.fal_image_gen_config))
         else:
