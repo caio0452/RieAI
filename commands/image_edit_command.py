@@ -51,8 +51,10 @@ class ImageEditCommand(commands.Cog):
         }
         data = {
             "prompt": request,
+            "guidance_scale": 3.5,
             "safety_tolerance": "2",
             "num_images": 1,
+            "output_format": "jpeg",
             "image_url": image_url
         }
 
