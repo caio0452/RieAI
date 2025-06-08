@@ -12,6 +12,7 @@ from core.bot_workflow.knowledge import KnowledgeIndex, LongTermMemoryIndex
 
 from commands.sync_command_tree import SyncCommand
 from commands.image_gen_command import ImageGenCommand
+from commands.image_edit_command import ImageEditCommand
 
 logs.setup()
 
@@ -55,11 +56,18 @@ class DiscordBot:
         ))
 
     async def setup_commands(self):
-        # await self.bot.add_cog(SearchCommand(bot=self.bot,conn=conn))
-        # await self.bot.add_cog(FindClosePreset(presets_manager=await preset_queries.manager(OAICompatibleProviderData(embeddings_client)), bot=self.bot))
-        await self.bot.add_cog(SyncCommand(bot=self.bot))
-        # await self.bot.add_cog(TranslateCommand(bot=self.bot))
-        # await self.bot.add_cog(RewriteCommand(bot=self.bot))
+        await self.bot.add_cog(SyncCommand(bot=self.bot))      
+        await self.bot.add_cog(ImageEditCommand(
+            discord_bot=self.bot, 
+            bot_profile=self.profile, 
+            fal_config=self.profile.fal_image_gen_config
+        ))
+        await self.bot.add_cog(ImageGenCommand(
+            discord_bot=self.bot, 
+            bot_profile=self.profile, 
+            fal_config=self.profile.fal_image_gen_config
+        ))       
+
         
         if bot.profile.fal_image_gen_config.enabled:
             await self.bot.add_cog(ImageGenCommand(discord_bot=self.bot, bot_profile=self.profile, fal_config=bot.profile.fal_image_gen_config))
