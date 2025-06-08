@@ -1,9 +1,11 @@
-import discord
-import json
 import io
-import requests
+import json
 import httpx
+import base64
+import discord
+import requests
 import traceback
+
 from discord import app_commands
 from discord.ext import commands
 from core.util.rate_limits import RateLimit, RateLimiter
@@ -36,7 +38,6 @@ class ImageEditCommand(commands.Cog):
             )
         )
         response_data = json.loads(response.message.content)
-
         if response_data["mentions_sexual_content"] or response_data["violent_content"] == "high" or response_data["graphic_content"] == "high":
             return True
         
@@ -85,8 +86,13 @@ class ImageEditCommand(commands.Cog):
             json_data = req.content.decode('utf-8')
             data = json.loads(json_data)
 
-            image_url1 = data["images"][0]["url"]
-            file1 = discord.File(io.BytesIO(requests.get(image_url1).content), filename="image1.png")
+            if data["images"][0]["url"].startswith("data:image"):
+                header, encoded = data["images"][0]["url"].split(",", 1)
+                image_data = base64.b64decode(encoded)
+                file1 = discord.File(io.BytesIO(image_data), filename="image1.png")
+            else:
+                image_url1 = data["images"][0]["url"]
+                file1 = discord.File(io.BytesIO(requests.get(image_url1).content), filename="image1.png")
 
             await interaction.followup.send(
                 f"`PROMPT:` **{query}**", file=file1
@@ -94,4 +100,4 @@ class ImageEditCommand(commands.Cog):
         except Exception as e:
             traceback.print_exc()
             await interaction.followup.send(
-                f":x: There was error generating the image: {str(e)}")
+                f":x: There was error generating the image: `{str(e)[:1800]}`")
