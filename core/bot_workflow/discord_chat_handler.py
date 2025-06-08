@@ -64,7 +64,7 @@ class DiscordChatHandler(commands.Cog):
             
             log_data = ResponseLogsManager.instance().get_log_by_id(num)
             if log_data is None:
-                await message.reply(f"❌ No log with ID {num} found")
+                await message.reply(f"❌ No log with ID `{num}` found")
                 return
             log_file = io.BytesIO(log_data.encode('utf-8'))
             await message.reply(
@@ -73,19 +73,19 @@ class DiscordChatHandler(commands.Cog):
             )
         except ValueError:
             invalid_log_msg = self.ai_bot.profile.lang["invalid_log_request"]
-            await message.reply(invalid_log_msg.format(sanitized_msg))
+            await message.reply(invalid_log_msg.format(ctx.sanitized_content))
 
     async def respond_with_llm(self, message: discord.Message, *, verbose: bool=False):
         await self.memorize_discord_message(message, pending=True, add_after_id=None)
 
-        reply = await message.reply(
+        typing_msg = await message.reply(
             self.ai_bot.profile.lang["bot_typing"], 
             silent=self.ai_bot.profile.options.only_ping_on_response_finish
         )
         
         try:
             resp = await self.generate_response(message, verbose)
-            resp_msg: discord.Message = await self.reply_chunked_with_disclaimers(reply, resp.text, ping=True)
+            resp_msg: discord.Message = await self.reply_chunked_with_disclaimers(message, resp.text, ping=True)
 
             if verbose:
                 log_file = StringIO(resp.verbose_log_output)
@@ -103,9 +103,9 @@ class DiscordChatHandler(commands.Cog):
                 add_after_id=message.id
             )
             await self.ai_bot.recent_history.mark_finalized(message.id)
-            ResponseLogsManager.instance().store_log(reply.id, resp.verbose_log_output)
+            ResponseLogsManager.instance().store_log(resp_msg.id, resp.verbose_log_output)
         except Exception as e:
-            await self.handle_error(message, reply, e)
+            await self.handle_error(message, message, e)
 
     async def generate_response(self, message: discord.Message, verbose: bool) -> AIDiscordBotResponder.Response:
         resp = AIDiscordBotResponder(self.ai_bot, message, verbose)
@@ -113,23 +113,27 @@ class DiscordChatHandler(commands.Cog):
 
     def _chunk_by_length_and_spaces(self, full_text: str, max_chunk_length: int) -> list[str]:
         chunks: list[str] = []
-        cursor = 0
-        text_length = len(full_text)
+        current_chunk = ""
+        partial_leftover_word = ""
+        words = full_text.split(" ") 
 
-        while cursor < text_length:
-            segment_end = min(cursor + max_chunk_length, text_length)
-            segment = full_text[cursor:segment_end]
+        for word in words:
+            if len(partial_leftover_word) > 0:
+                current_chunk += partial_leftover_word + " "
+                partial_leftover_word = ""
 
-            if segment_end < text_length:
-                last_space = segment.rfind(' ')
-                # If there are no spaces in the last half, maybe the string isn't meant to be split on spaces
-                min_space_pos_to_split = max_chunk_length // 2
-                if last_space > min_space_pos_to_split:
-                    end = cursor + last_space
-                    segment = full_text[cursor:end]
-
-            chunks.append(segment)
-            cursor = segment_end
+            if len(current_chunk) + len(word) <= max_chunk_length:
+                current_chunk += " " + word
+            else:
+                # If the word is very large, maybe this is not regular text that's meant to be split in spaces
+                if len(word) < max_chunk_length // 2:
+                    len_until_max = max_chunk_length - len(word)
+                    partial_word = word[0:len_until_max]
+                    current_chunk += partial_word
+                    partial_leftover_word = word.replace(partial_word, "")
+                else:
+                    chunks.append(current_chunk)
+                    current_chunk = ""
 
         return chunks
     
@@ -163,9 +167,12 @@ class DiscordChatHandler(commands.Cog):
 
         return balanced
 
-    async def reply_chunked_with_disclaimers(self, reply: discord.Message, resp_str: str, *, ping: bool) -> discord.Message:
+    async def send_chunked_with_disclaimers(self, resp_str: str, *, reply_to: discord.Message | None, edit_msg: discord.Message | None, ping: bool) -> discord.Message:
         disclaimer = self.ai_bot.profile.lang.get("disclaimer", "")
         max_chunk_length = 1800 - len(disclaimer)
+
+        if reply_to is not None and edit_msg is not None:
+            raise ValueError("Must specify one of reply_to or edit_msg, not both")
 
         def strip_newline(chunk):
             return chunk.strip('\r\n') if self.ai_bot.profile.options.remove_trailing_newline else chunk
@@ -176,14 +183,23 @@ class DiscordChatHandler(commands.Cog):
             for chunk in self._balance_code_block_fences(original_text=resp_str, chunked_text=raw_chunks)
         ]
 
-        if self.ai_bot.profile.options.only_ping_on_response_finish:
-            last_msg = await reply.reply(content=code_balanced_chunks[0], silent=False)
-            await reply.delete()
+        last_msg = None
+        if edit_msg is not None:
+            last_msg = await edit_msg.edit(content=code_balanced_chunks[0])
+            remaining_chunks = code_balanced_chunks[1:]
+        elif reply_to is not None:
+            if self.ai_bot.profile.options.only_ping_on_response_finish:
+                last_msg = await reply_to.reply(content=code_balanced_chunks[0], silent=True)
+                await reply_to.delete()
+            else:
+                last_msg = await reply_to.reply(content=code_balanced_chunks[0], silent=not ping)
+            remaining_chunks = code_balanced_chunks[1:]
         else:
-            last_msg = await reply.edit(content=code_balanced_chunks[0])
+            raise ValueError("Must specify one of reply_to or edit_msg, not zero")
+        
+        for chunk in remaining_chunks:
+            last_msg = await last_msg.reply(content=chunk, silent=not ping)
 
-        for chunk in code_balanced_chunks[1:]:
-            last_msg = await reply.reply(content=chunk, silent=not ping)
         return last_msg
     
     async def memorize_message(self, message: MessageSnapshot, *, pending: bool, add_after_id: None | int) -> None:
