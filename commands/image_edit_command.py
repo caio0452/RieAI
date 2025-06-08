@@ -55,7 +55,8 @@ class ImageEditCommand(commands.Cog):
             "safety_tolerance": "2",
             "num_images": 1,
             "output_format": "jpeg",
-            "image_url": image_url
+            "image_url": image_url,
+            "sync_mode": True,
         }
 
         async with httpx.AsyncClient(timeout=60) as client:
