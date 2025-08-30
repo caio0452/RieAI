@@ -8,9 +8,11 @@ import traceback
 
 from discord import app_commands
 from discord.ext import commands
-from core.util.rate_limits import RateLimit, RateLimiter
-from core.ai_apis.client import LLMClient, LLMRequestParams
-from core.bot_workflow.profile_loader import Profile, FalImageGenModuleConfig
+from reynard_ai.util.rate_limits import RateLimiter, RateLimit
+from reynard_ai.ai_workflow.ai_responder import LLMRequestParams
+from reynard_ai.bot_data.bot_profile import Profile, FalImageGenModuleConfig
+
+from commands.image_gen_command import LLMClient
 
 class ImageEditCommand(commands.Cog):
     def __init__(self, discord_bot: commands.Bot, bot_profile: Profile, fal_config: FalImageGenModuleConfig) -> None:

@@ -1,20 +1,21 @@
-import discord
-import json
 import io
-import requests
+import json
 import httpx
+import discord
+import requests
 import traceback
+
 from discord import app_commands
 from discord.ext import commands
-from core.util.rate_limits import RateLimit, RateLimiter
-from core.ai_apis.client import LLMClient, LLMRequestParams
-from core.bot_workflow.profile_loader import Profile, FalImageGenModuleConfig
+from reynard_ai.bot_data.bot_profile import Profile
+from reynard_ai.util.rate_limits import RateLimit, RateLimiter
+from reynard_ai.ai_apis.client import LLMClient, LLMRequestParams
 
 class ImageGenCommand(commands.Cog):
-    def __init__(self, discord_bot: commands.Bot, bot_profile: Profile, fal_config: FalImageGenModuleConfig) -> None:
+    def __init__(self, discord_bot: commands.Bot, bot_profile: Profile) -> None:
         self.discord_bot = discord_bot
-        self.fal_config = fal_config
         self.bot_profile = bot_profile
+        self.fal_config = bot_profile.fal_image_gen_config
         self.image_gen_rate_limiter = RateLimiter(RateLimit(n_messages=3, seconds=60))
 
     async def _is_blocked_prompt(self, prompt: str) -> bool:
