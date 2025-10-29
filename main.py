@@ -47,30 +47,13 @@ class DiscordBot:
         ) # TODO: There should be required providers
         if self.bot.user is None:
             raise RuntimeError("Could not initialize bot: bot user is None")
+            
         event_bus = AsyncEventBus()
         bridge = DiscordBridge(self.bot, bus=event_bus, known_chatrooms=[])
         await self.bot.add_cog(
             bridge,
         )
-        self.ai_bot_data = AIBot(
-            name=self.profile.options.botname, 
-            profile=self.profile, 
-            provider_store=provider_store,
-            long_term_memory=self.long_term_memory,
-            knowledge=self.knowledge,
-            account_id=self.bot.user.id,
-            memory_length=50            
-        )
-        self.chat_handler = DiscordChatHandler(
-            event_bus, 
-            self.ai_bot_data
-        )
-        event_bus.start()
-        event_bus = AsyncEventBus()
-        bridge = DiscordBridge(self.bot, bus=event_bus, known_chatrooms=[])
-        await self.bot.add_cog(
-            bridge,
-        )
+        
         self.ai_bot_data = AIBot(
             name=self.profile.options.botname, 
             profile=self.profile, 
@@ -89,7 +72,7 @@ class DiscordBot:
     async def setup_commands(self):
         await self.bot.add_cog(SyncCommand(bot=self.bot))
         
-        if bot.profile.fal_image_gen_config.enabled:
+        if self.profile.fal_image_gen_config.enabled:
             await self.bot.add_cog(ImageGenCommand(discord_bot=self.bot, bot_profile=self.profile))
             await self.bot.add_cog(VideoGenCommand(discord_bot=self.bot, bot_profile=self.profile))
         else:
@@ -97,8 +80,6 @@ class DiscordBot:
     
 
     async def on_ready(self):
-        logging.info("Creating chatbot...")
-        await self.setup_chatbot()
         logging.info("Creating chatbot...")
         await self.setup_chatbot()
         logging.info("Setting up commands...")
