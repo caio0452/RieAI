@@ -1,9 +1,7 @@
 import discord
 import logging
 import reynard_ai.util.logging_setup as logs
-import reynard_ai.util.logging_setup as logs
 
-from dotenv import load_dotenv
 from dotenv import load_dotenv
 from discord.ext import commands
 from commands.sync_command_tree import SyncCommand
@@ -21,7 +19,6 @@ from reynard_ai.bot_data.knowledge import KnowledgeIndex, LongTermMemoryIndex
 
 logs.setup()
 load_dotenv()
-load_dotenv()
 
 class DiscordBot:
     def __init__(self):
@@ -31,7 +28,6 @@ class DiscordBot:
         self.profile = Profile.from_file("profile.json")
         self.bot.event(self.on_ready)
         self.ai_bot_data: AIBot | None = None
-        self.ai_bot_data: AIBot | None = None
 
     def run(self):
         bot_token = get_environment_var('AI_BOT_TOKEN', required=True)
@@ -40,7 +36,6 @@ class DiscordBot:
     async def setup_chatbot(self):
         embeddings_provider = self.profile.providers["EMBEDDINGS"]
         self.knowledge = await KnowledgeIndex.from_provider(embeddings_provider)
-        if self.profile.memory_settings.enable_long_term_memory:
         if self.profile.memory_settings.enable_long_term_memory:
             self.long_term_memory: LongTermMemoryIndex | None = await LongTermMemoryIndex.from_provider(embeddings_provider)
         else:
