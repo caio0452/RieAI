@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from commands.sync_command_tree import SyncCommand
 from commands.image_gen_command import ImageGenCommand
+from commands.video_gen_command import VideoGenCommand
 
 from reynard_ai.bot_data.ai_bot import AIBot
 from reynard_ai.bot_data.bot_profile import Profile
@@ -67,17 +68,14 @@ class DiscordBot:
         event_bus.start()
 
     async def setup_commands(self):
-        # await self.bot.add_cog(SearchCommand(bot=self.bot,conn=conn))
-        # await self.bot.add_cog(FindClosePreset(presets_manager=await preset_queries.manager(OAICompatibleProviderData(embeddings_client)), bot=self.bot))
         await self.bot.add_cog(SyncCommand(bot=self.bot))
-        # await self.bot.add_cog(TranslateCommand(bot=self.bot))
-        # await self.bot.add_cog(RewriteCommand(bot=self.bot))
         
         if bot.profile.fal_image_gen_config.enabled:
             await self.bot.add_cog(ImageGenCommand(discord_bot=self.bot, bot_profile=self.profile))
+            await self.bot.add_cog(VideoGenCommand(discord_bot=self.bot, bot_profile=self.profile))
         else:
             logging.info("Image generation using FAL.AI is disabled")
-        pass
+    
 
     async def on_ready(self):
         logging.info("Creating chatbot...")
