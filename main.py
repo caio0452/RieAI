@@ -52,15 +52,8 @@ class DiscordBot:
         provider_store = ProviderDataStore(
             providers=provider_list
         ) # TODO: There should be required providers
-        if self.bot.user is None:
-            raise RuntimeError("Could not initialize bot: bot user is None")
+        assert self.bot.user is not None
             
-        event_bus = AsyncEventBus()
-        bridge = DiscordBridge(self.bot, bus=event_bus, known_chatrooms=[])
-        await self.bot.add_cog(
-            bridge,
-        )
-        
         self.ai_bot_data = ReynardAIBotData(
             profile=self.profile, 
             provider_store=provider_store,
