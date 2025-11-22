@@ -11,6 +11,7 @@ from discord.ext import commands
 from reynard_ai.bot_data.bot_profile import Profile
 from reynard_ai.util.rate_limits import RateLimit, RateLimiter
 from reynard_ai.ai_apis.client import LLMClient, LLMRequestParams
+from sympy import true
 
 class VideoGenCommand(commands.Cog):
     def __init__(self, discord_bot: commands.Bot, bot_profile: Profile) -> None:
@@ -43,15 +44,17 @@ class VideoGenCommand(commands.Cog):
         return False
 
     async def _fal_ai_submit_video_request(self, prompt: str) -> str:
-        url = "https://queue.fal.run/fal-ai/longcat-video/distilled/text-to-video/480p"
+        url = "https://queue.fal.run/fal-ai/bytedance/seedance/v1/pro/fast/text-to-video"
         headers = {
             "Authorization": f"Key {self.fal_config.api_key}",
             "Content-Type": "application/json",
         }
         data = {
             "prompt": prompt,
-            "enable_safety_checker": True,
-            "num_frames": 45
+            "aspect_ratio": "16:9",
+            "resolution": "480p",
+            "duration": "3",
+            "enable_safety_checker": True
         }
 
         async with httpx.AsyncClient(timeout=60) as client:

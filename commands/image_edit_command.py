@@ -1,0 +1,105 @@
+import io
+import json
+import httpx
+import base64
+import discord
+import requests
+import traceback
+
+from discord import app_commands
+from discord.ext import commands
+from reynard_ai.util.rate_limits import RateLimiter, RateLimit
+from reynard_ai.ai_workflow.ai_responder import LLMRequestParams
+from reynard_ai.bot_data.bot_profile import Profile, FalImageGenModuleConfig
+
+from commands.image_gen_command import LLMClient
+
+class ImageEditCommand(commands.Cog):
+    def __init__(self, discord_bot: commands.Bot, bot_profile: Profile, fal_config: FalImageGenModuleConfig) -> None:
+        self.discord_bot = discord_bot
+        self.fal_config = fal_config
+        self.bot_profile = bot_profile
+        self.image_gen_rate_limiter = RateLimiter(RateLimit(n_messages=3, seconds=60))
+
+    async def _is_blocked_prompt(self, prompt: str) -> bool:
+        blocked_words = ["nsfw", "naked", "bikini", "lingerie", "sexy", "penis", "fuck", "murder", "blood"]
+        NAME = "NSFW_IMAGE_PROMPT_FILTER"
+        nsfw_filter_prompt = self.bot_profile.prompts[NAME]
+        nsfw_filter_provider = self.bot_profile.providers[NAME]
+        nsfw_filter_llm = LLMClient.from_provider(nsfw_filter_provider)
+
+        for word in blocked_words:
+            if word in prompt:
+                return True
+
+        response = await nsfw_filter_llm.send_request(
+            prompt=nsfw_filter_prompt,
+            params=LLMRequestParams(
+                model_name="gpt-4o-mini",
+                temperature=0
+            )
+        )
+        response_data = json.loads(response.message.content)
+        if response_data["mentions_sexual_content"] or response_data["violent_content"] == "high" or response_data["graphic_content"] == "high":
+            return True
+        
+        return False
+
+    async def _fal_ai_request_image(self, image_url: str, request: str):
+        url = "https://fal.run/fal-ai/flux-pro/kontext"
+
+        headers = {
+            "Authorization": f"Key {self.bot_profile.fal_image_gen_config.api_key}",
+            "Content-Type": "application/json",
+        }
+        data = {
+            "prompt": request,
+            "guidance_scale": 3.5,
+            "safety_tolerance": "2",
+            "num_images": 1,
+            "output_format": "jpeg",
+            "image_url": image_url,
+            "sync_mode": True,
+        }
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(url, headers=headers, json=data)
+            return response
+
+    @app_commands.command(
+        name="edit_image", 
+        description="edit an image"
+    )
+    async def edit_image(self, interaction: discord.Interaction, image_url: str, query: str) -> None:
+        user_id = interaction.user.id
+        await interaction.response.defer()
+
+        try:
+            if await self._is_blocked_prompt(query):
+                await interaction.followup.send(":x: Prompt flagged")
+                return
+            
+            if self.image_gen_rate_limiter.is_rate_limited(user_id):
+                await interaction.followup.send(":x: You are being rate limited (3 / min)")
+                return
+            
+            self.image_gen_rate_limiter.register_request(user_id)
+            req = await self._fal_ai_request_image(image_url, query)
+            json_data = req.content.decode('utf-8')
+            data = json.loads(json_data)
+
+            if data["images"][0]["url"].startswith("data:image"):
+                header, encoded = data["images"][0]["url"].split(",", 1)
+                image_data = base64.b64decode(encoded)
+                file1 = discord.File(io.BytesIO(image_data), filename="image1.png")
+            else:
+                image_url1 = data["images"][0]["url"]
+                file1 = discord.File(io.BytesIO(requests.get(image_url1).content), filename="image1.png")
+
+            await interaction.followup.send(
+                f"`PROMPT:` **{query}**", file=file1
+            )
+        except Exception as e:
+            traceback.print_exc()
+            await interaction.followup.send(
+                f":x: There was error generating the image: `{str(e)[:1800]}`")

@@ -71,7 +71,6 @@ class DiscordBot:
         )
         await ReynardChatBot.create_discord_bot(self.bot, self.ai_bot_data)
 
-
     async def setup_commands(self):
         await self.bot.add_cog(SyncCommand(bot=self.bot))
         
