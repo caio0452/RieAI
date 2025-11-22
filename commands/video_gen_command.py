@@ -11,7 +11,6 @@ from discord.ext import commands
 from reynard_ai.bot_data.bot_profile import Profile
 from reynard_ai.util.rate_limits import RateLimit, RateLimiter
 from reynard_ai.ai_apis.client import LLMClient, LLMRequestParams
-from sympy import true
 
 class VideoGenCommand(commands.Cog):
     def __init__(self, discord_bot: commands.Bot, bot_profile: Profile) -> None:
@@ -19,6 +18,7 @@ class VideoGenCommand(commands.Cog):
         self.bot_profile = bot_profile
         self.fal_config = bot_profile.fal_image_gen_config # Assuming video uses the same config/key
         self.video_gen_rate_limiter = RateLimiter(RateLimit(n_messages=1, seconds=60))
+        self.MODEL_BASE_URL = "https://queue.fal.run/fal-ai/bytedance/seedance/v1/pro/fast"
 
     async def _is_blocked_prompt(self, prompt: str) -> bool:
         blocked_words = ["nsfw", "naked", "bikini", "lingerie", "sexy", "penis", "fuck", "murder", "blood"]
@@ -44,7 +44,7 @@ class VideoGenCommand(commands.Cog):
         return False
 
     async def _fal_ai_submit_video_request(self, prompt: str) -> str:
-        url = "https://queue.fal.run/fal-ai/bytedance/seedance/v1/pro/fast/text-to-video"
+        url = f"{self.MODEL_BASE_URL}/text-to-video"
         headers = {
             "Authorization": f"Key {self.fal_config.api_key}",
             "Content-Type": "application/json",
@@ -66,8 +66,8 @@ class VideoGenCommand(commands.Cog):
             return response_data["request_id"]
 
     async def _fal_ai_poll_for_video_result(self, request_id: str) -> dict:
-        status_url = f"https://queue.fal.run/fal-ai/longcat-video/requests/{request_id}/status"
-        result_url = f"https://queue.fal.run/fal-ai/longcat-video/requests/{request_id}"
+        status_url = f"{self.MODEL_BASE_URL}/requests/{request_id}/status"
+        result_url = f"{self.MODEL_BASE_URL}/requests/{request_id}"
         headers = { "Authorization": f"Key {self.fal_config.api_key}" }
         
         async with httpx.AsyncClient(timeout=180) as client:

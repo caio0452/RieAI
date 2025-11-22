@@ -8,14 +8,14 @@ from commands.sync_command_tree import SyncCommand
 from commands.image_gen_command import ImageGenCommand
 from commands.video_gen_command import VideoGenCommand
 
-from reynard_ai.bot_data.ai_bot import AIBot
 from reynard_ai.bot_data.bot_profile import Profile
+from reynard_ai.chatbot.chatbot import ReynardChatBot
+from reynard_ai.bot_data.ai_bot import ReynardAIBotData
 from reynard_ai.ai_apis.providers import ProviderDataStore
-from reynard_ai.chat.base_chat_handler import AsyncEventBus
-from reynard_ai.chat.discord_events_bridge import DiscordBridge
+from reynard_ai.chat_base.base_chat_handler import AsyncEventBus
+from reynard_ai.chatbot.discord_events_bridge import DiscordBridge
 from reynard_ai.util.environment_vars import get_environment_var
-from reynard_ai.chat.discord_chat_handler import DiscordChatHandler
-from reynard_ai.bot_data.knowledge import KnowledgeIndex, LongTermMemoryIndex
+from reynard_ai.bot_data.knowledge import KnowledgeIndex, LongTermMemoryIndex, EmbeddingsClient
 
 logs.setup()
 load_dotenv()
@@ -27,7 +27,7 @@ class DiscordBot:
         self.bot = commands.Bot(command_prefix='r!', intents=intents)
         self.profile = Profile.from_file("profile.json")
         self.bot.event(self.on_ready)
-        self.ai_bot_data: AIBot | None = None
+        self.ai_bot_data: ReynardAIBotData | None = None
 
     def run(self):
         bot_token = get_environment_var('AI_BOT_TOKEN', required=True)
@@ -35,9 +35,16 @@ class DiscordBot:
 
     async def setup_chatbot(self):
         embeddings_provider = self.profile.providers["EMBEDDINGS"]
-        self.knowledge = await KnowledgeIndex.from_provider(embeddings_provider)
+        embedding_model_name = self.profile.get_request_params("EMBEDDINGS").model_name
+        embedding_client = EmbeddingsClient(
+            embeddings_provider, 
+            embedding_model_name,
+            3072 # TODO: Make configurable
+        )
+    
+        self.knowledge = await KnowledgeIndex.from_vectorizer(embedding_client)
         if self.profile.memory_settings.enable_long_term_memory:
-            self.long_term_memory: LongTermMemoryIndex | None = await LongTermMemoryIndex.from_provider(embeddings_provider)
+            self.long_term_memory: LongTermMemoryIndex | None = await LongTermMemoryIndex.from_vectorizer(embedding_client)
         else:
             self.long_term_memory = None
 
@@ -54,8 +61,7 @@ class DiscordBot:
             bridge,
         )
         
-        self.ai_bot_data = AIBot(
-            name=self.profile.options.botname, 
+        self.ai_bot_data = ReynardAIBotData(
             profile=self.profile, 
             provider_store=provider_store,
             long_term_memory=self.long_term_memory,
@@ -63,11 +69,8 @@ class DiscordBot:
             account_id=self.bot.user.id,
             memory_length=50            
         )
-        self.chat_handler = DiscordChatHandler(
-            event_bus, 
-            self.ai_bot_data
-        )
-        event_bus.start()
+        await ReynardChatBot.create_discord_bot(self.bot, self.ai_bot_data)
+
 
     async def setup_commands(self):
         await self.bot.add_cog(SyncCommand(bot=self.bot))
