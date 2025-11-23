@@ -12,5 +12,6 @@ class SyncCommand(commands.Cog):
     )
     @commands.is_owner()
     async def sync_commands(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer(ephemeral=True)
         await self.bot.tree.sync()
         await interaction.followup.send("Command tree synced.")
