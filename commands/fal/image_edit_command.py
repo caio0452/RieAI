@@ -9,13 +9,13 @@ from commands.fal.fal_common import BaseFalCommand
 from reynard_ai.bot_data.bot_profile import Profile
 
 class ImageEditCommand(BaseFalCommand):
-    def __init__(self, discord_bot: commands.Bot, bot_profile: Profile, fal_config: Any) -> None:
+    def __init__(self, discord_bot: commands.Bot, bot_profile: Profile) -> None:
         super().__init__(
             discord_bot, 
             bot_profile, 
             RateLimit(n_messages=3, seconds=60)
         )
-        self.fal_config = fal_config
+        self.fal_config = bot_profile.fal_image_gen_config
 
     async def _fal_ai_request_edit(self, image_url: str, request: str):
         url = "https://fal.run/fal-ai/flux-pro/kontext"

@@ -6,14 +6,13 @@ from discord.ext import commands
 from commands.sync_command_tree import SyncCommand
 from commands.fal.image_gen_command import ImageGenCommand
 from commands.fal.video_gen_command import VideoGenCommand
+from commands.fal.image_edit_command import ImageEditCommand
 
 import reynard_ai.util.logging_setup as logs
 from reynard_ai.bot_data.bot_profile import Profile
 from reynard_ai.chatbot.chatbot import ReynardChatBot
 from reynard_ai.bot_data.ai_bot import ReynardAIBotData
 from reynard_ai.ai_apis.providers import ProviderDataStore
-from reynard_ai.chat_base.base_chat_handler import AsyncEventBus
-from reynard_ai.chatbot.discord_events_bridge import DiscordBridge
 from reynard_ai.util.environment_vars import get_environment_var
 from reynard_ai.bot_data.knowledge import KnowledgeIndex, LongTermMemoryIndex, EmbeddingsClient
 
