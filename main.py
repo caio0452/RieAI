@@ -69,6 +69,7 @@ class DiscordBot:
         
         if self.profile.fal_image_gen_config.enabled:
             await self.bot.add_cog(ImageGenCommand(discord_bot=self.bot, bot_profile=self.profile))
+            await self.bot.add_cog(ImageEditCommand(discord_bot=self.bot, bot_profile=self.profile))
             await self.bot.add_cog(VideoGenCommand(discord_bot=self.bot, bot_profile=self.profile))
         else:
             logging.info("Image generation using FAL.AI is disabled")
