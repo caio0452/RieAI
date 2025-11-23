@@ -7,6 +7,7 @@ from commands.sync_command_tree import SyncCommand
 from commands.fal.image_gen_command import ImageGenCommand
 from commands.fal.video_gen_command import VideoGenCommand
 from commands.fal.image_edit_command import ImageEditCommand
+from commands.fal.image_gen_hq_command import ImageGenHqCommand
 
 import reynard_ai.util.logging_setup as logs
 from reynard_ai.bot_data.bot_profile import Profile
@@ -68,6 +69,7 @@ class DiscordBot:
         
         if self.profile.fal_image_gen_config.enabled:
             await self.bot.add_cog(ImageGenCommand(discord_bot=self.bot, bot_profile=self.profile))
+            await self.bot.add_cog(ImageGenHqCommand(discord_bot=self.bot, bot_profile=self.profile))
             await self.bot.add_cog(ImageEditCommand(discord_bot=self.bot, bot_profile=self.profile))
             await self.bot.add_cog(VideoGenCommand(discord_bot=self.bot, bot_profile=self.profile))
         else:
