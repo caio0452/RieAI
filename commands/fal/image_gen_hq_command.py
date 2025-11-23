@@ -16,7 +16,7 @@ class ImageGenHqCommand(BaseFalCommand):
         )
 
     async def _fal_ai_request_image(self, request: str):
-        url = "https://fal.run/fal-ai/fal-ai/nano-banana-pro"
+        url = "https://fal.run/fal-ai/nano-banana-pro"
         headers = {
             "Authorization": f"Key {self.fal_config.api_key}",
             "Content-Type": "application/json",
