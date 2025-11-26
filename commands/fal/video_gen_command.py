@@ -25,8 +25,8 @@ class VideoGenCommand(BaseFalCommand):
         data = {
             "prompt": prompt,
             "aspect_ratio": "16:9",
-            "resolution": "480p",
-            "duration": "3",
+            "resolution": "720p",
+            "duration": "6",
             "enable_safety_checker": True
         }
 
