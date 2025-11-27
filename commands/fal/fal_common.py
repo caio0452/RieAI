@@ -4,9 +4,9 @@ import httpx
 import base64
 import discord
 import traceback
+from typing import Callable, Optional, Union, List
 
 from discord.ext import commands
-from typing import Callable, Optional
 from reynard_ai.bot_data.bot_profile import Profile
 from reynard_ai.util.rate_limits import RateLimit, RateLimiter
 from reynard_ai.ai_apis.client import LLMClient, LLMRequestParams
@@ -36,7 +36,7 @@ class BaseFalCommand(commands.Cog):
                 params=LLMRequestParams(model_name="gpt-4o-mini", temperature=0)
             )
             response_data = json.loads(response.message.content)
-
+            
             if (response_data.get("mentions_sexual_content") or 
                 response_data.get("violent_content") == "high" or 
                 response_data.get("graphic_content") == "high"):
@@ -79,9 +79,12 @@ class BaseFalCommand(commands.Cog):
                 return
             
             self.rate_limiter.register_request(user_id)
-            result_file = await generation_coroutine()
+            result = await generation_coroutine()
             msg_content = success_message if success_message else f"`PROMPT:` **{prompt}**"
-            await interaction.followup.send(content=msg_content, file=result_file)
+            if isinstance(result, list):
+                await interaction.followup.send(content=msg_content, files=result)
+            else:
+                await interaction.followup.send(content=msg_content, file=result)
 
         except Exception as e:
             traceback.print_exc()
