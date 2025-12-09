@@ -17,30 +17,36 @@ class VideoGenCommand(BaseFalCommand):
         )
 
     async def _fal_ai_submit_video_request(self, prompt: str) -> str:
-        url = "https://queue.fal.run/fal-ai/bytedance/seedance/v1/pro/fast/text-to-video"
+        url = "https://queue.fal.run/fal-ai/pixverse/v5.5/text-to-video"
+        
         headers = {
             "Authorization": f"Key {self.fal_config.api_key}",
             "Content-Type": "application/json",
         }
+        
         data = {
             "prompt": prompt,
             "aspect_ratio": "16:9",
             "resolution": "720p",
-            "duration": "6",
-            "enable_safety_checker": True
+            "duration": "5", 
+            "thinking_type": "auto",
+            "generate_audio_switch": True,
+            "negative_prompt": ""
         }
 
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(url, headers=headers, json=data)
             response.raise_for_status()
             response_data = response.json()
+            
             if "request_id" not in response_data:
                 raise ValueError(f"API did not return a request_id. Response: {response_data}")
+            
             return response_data["request_id"]
 
     async def _fal_ai_poll_for_video_result(self, request_id: str) -> dict:
-        status_url = f"https://queue.fal.run/fal-ai/longcat-video/requests/{request_id}/status"
-        result_url = f"https://queue.fal.run/fal-ai/longcat-video/requests/{request_id}"
+        status_url = f"https://queue.fal.run/fal-ai/pixverse/requests/{request_id}/status"
+        result_url = f"https://queue.fal.run/fal-ai/pixverse/requests/{request_id}"
         headers = { "Authorization": f"Key {self.fal_config.api_key}" }
         
         async with httpx.AsyncClient(timeout=180) as client:
@@ -50,6 +56,7 @@ class VideoGenCommand(BaseFalCommand):
                 status_data = status_response.json()
 
                 status = status_data.get("status")
+                
                 if status == "COMPLETED":
                     break
                 elif status in ["IN_PROGRESS", "IN_QUEUE"]:
@@ -62,11 +69,11 @@ class VideoGenCommand(BaseFalCommand):
             result_response.raise_for_status()
             return result_response.json()
 
-    @app_commands.command(name="generate_video", description="Generate a short video from a text prompt")
+    @app_commands.command(name="generate_video", description="Generate a short video from a text prompt using Pixverse v5.5")
     async def generate_video(self, interaction: discord.Interaction, query: str) -> None:
         
         async def logic():
-            await interaction.followup.send(f"Generating video for your prompt:...")
+            await interaction.followup.send(f"Generating video for your prompt (Pixverse v5.5)...")
             request_id = await self._fal_ai_submit_video_request(query)
             result_data = await self._fal_ai_poll_for_video_result(request_id)
             video_url = result_data["video"]["url"]

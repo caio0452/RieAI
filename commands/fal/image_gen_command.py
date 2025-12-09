@@ -31,7 +31,7 @@ class ImageGenCommand(BaseFalCommand):
             return await client.post(url, headers=headers, json=data)
 
     @app_commands.command(name="generate_image", description="Generate one or more images")
-    async def generate_image(self, interaction: discord.Interaction, query: str) -> None:
+    async def generate_image(self, interaction: discord.Interaction, query: str, amount: int = 1) -> None:
         async def logic():
             req = await self._fal_ai_request_image(query, 3)
             req.raise_for_status()

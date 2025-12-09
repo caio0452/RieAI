@@ -36,7 +36,7 @@ class BaseFalCommand(commands.Cog):
                 params=LLMRequestParams(model_name="gpt-4o-mini", temperature=0)
             )
             response_data = json.loads(response.message.content)
-            
+        
             if (response_data.get("mentions_sexual_content") or 
                 response_data.get("violent_content") == "high" or 
                 response_data.get("graphic_content") == "high"):
