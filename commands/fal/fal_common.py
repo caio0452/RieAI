@@ -88,7 +88,8 @@ class BaseFalCommand(commands.Cog):
 
         except httpx.HTTPStatusError as e:
             traceback.print_exc()
-            await interaction.followup.send(f":x: HTTP error {e.response.status_code} while generating content. ```{e.response.text[:1800]}```")
+            trimmed_err_json_str = e.response.json().dumps()[:1800]
+            await interaction.followup.send(f":x: HTTP error {e.response.status_code} while generating content. ```json\n{trimmed_err_json_str}```")
 
         except Exception as e:
             traceback.print_exc()
