@@ -7,6 +7,7 @@ from commands.sync_command_tree import SyncCommand
 from commands.fal.image_gen_command import ImageGenCommand
 from commands.fal.video_gen_command import VideoGenCommand
 from commands.fal.image_edit_command import ImageEditCommand
+from commands.fal.generate_music_command import MusicGenCommand
 from commands.fal.image_gen_hq_command import ImageGenHqCommand
 
 import reynard_ai.util.logging_setup as logs
@@ -72,6 +73,7 @@ class DiscordBot:
             await self.bot.add_cog(ImageGenHqCommand(discord_bot=self.bot, bot_profile=self.profile))
             await self.bot.add_cog(ImageEditCommand(discord_bot=self.bot, bot_profile=self.profile))
             await self.bot.add_cog(VideoGenCommand(discord_bot=self.bot, bot_profile=self.profile))
+            await self.bot.add_cog(MusicGenCommand(discord_bot=self.bot, bot_profile=self.profile))
         else:
             logging.info("Image generation using FAL.AI is disabled")
     
