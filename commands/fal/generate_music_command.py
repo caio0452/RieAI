@@ -36,6 +36,10 @@ class MusicGenCommand(BaseFalCommand):
         lyrics="Lyrics"
     )
     async def generate_music(self, interaction: discord.Interaction, style: str, lyrics: str) -> None:
+        if len(style) < 10 or len(lyrics) < 10:
+            await interaction.response.send_message("⚠️ Style and lyrics must have at least 10 characters each")
+            return
+
         async def logic():
             req = await self._fal_ai_request_music(style, lyrics)
             req.raise_for_status()
