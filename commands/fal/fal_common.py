@@ -86,6 +86,10 @@ class BaseFalCommand(commands.Cog):
             else:
                 await interaction.followup.send(content=msg_content, file=result)
 
+        except httpx.HTTPStatusError as e:
+            traceback.print_exc()
+            await interaction.followup.send(f":x: HTTP error {e.response.status_code} while generating content. ```{e.response.text[:1800]}```")
+
         except Exception as e:
             traceback.print_exc()
             error_msg = str(e)[:1800]
