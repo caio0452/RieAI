@@ -93,5 +93,5 @@ class BaseFalCommand(commands.Cog):
 
         except Exception as e:
             traceback.print_exc()
-            error_msg = str(e)[:1800]
+            error_msg = repr(e)[:1800]
             await interaction.followup.send(f":x: There was an error generating content: {error_msg}")
