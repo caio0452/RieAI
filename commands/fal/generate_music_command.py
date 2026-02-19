@@ -27,7 +27,7 @@ class MusicGenCommand(BaseFalCommand):
                 "format": "mp3"
             }
         }
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=180) as client:
             return await client.post(url, headers=headers, json=data)
 
     @app_commands.command(name="generate_music", description="Generate a song with certain lyrics")
