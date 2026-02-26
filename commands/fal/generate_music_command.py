@@ -52,9 +52,9 @@ class MusicGenCommand(BaseFalCommand):
                     params=LLMRequestParams(model_name="gemini-3-flash", temperature=1)
                 )
                 lyrics = response.message.content
-            except Exception:
-                await interaction.response.send_message("ERROR: could not generate AI lyrics")
-                pass
+            except Exception as e:
+                await interaction.response.send_message(f"ERROR: could not generate AI lyrics: `{repr(e)}`")
+                return
     
         if len(style) < 10 or len(lyrics) < 10:
             await interaction.response.send_message("⚠️ Style and lyrics must have at least 10 characters each")
