@@ -66,8 +66,6 @@ class BaseFalCommand(commands.Cog):
         success_message: Optional[str] = None
     ) -> None:
         user_id = interaction.user.id
-        await interaction.response.defer()
-
         try:
             if await self._is_blocked_prompt(prompt):
                 await interaction.followup.send(":x: Prompt flagged as inappropriate.")
