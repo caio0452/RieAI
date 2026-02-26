@@ -42,6 +42,7 @@ class MusicGenCommand(BaseFalCommand):
                 nsfw_filter_provider = self.bot_profile.providers["PERSONALITY"]
                 nsfw_filter_llm = LLMClient.from_provider(nsfw_filter_provider)
 
+                await interaction.response.defer(thinking=True)
                 response = await nsfw_filter_llm.send_request(
                     prompt=Prompt(messages=[
                         {
