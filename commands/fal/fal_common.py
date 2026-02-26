@@ -4,7 +4,7 @@ import httpx
 import base64
 import discord
 import traceback
-from typing import Callable, Optional, Union, List
+from typing import Callable, Optional
 
 from discord.ext import commands
 from reynard_ai.bot_data.bot_profile import Profile

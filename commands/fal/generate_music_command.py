@@ -5,6 +5,7 @@ from discord.ext import commands
 from reynard_ai.util.rate_limits import RateLimit
 from commands.fal.fal_common import BaseFalCommand
 from reynard_ai.bot_data.bot_profile import Profile
+from reynard_ai.ai_apis.client import LLMClient, LLMRequestParams, Prompt
 
 class MusicGenCommand(BaseFalCommand):
     def __init__(self, discord_bot: commands.Bot, bot_profile: Profile) -> None:
@@ -35,7 +36,26 @@ class MusicGenCommand(BaseFalCommand):
         style="Music genre and description",
         lyrics="Lyrics"
     )
-    async def generate_music(self, interaction: discord.Interaction, style: str, lyrics: str) -> None:
+    async def generate_music(self, interaction: discord.Interaction, style: str, lyrics: str="") -> None:
+        if lyrics == "":
+            try:
+                nsfw_filter_provider = self.bot_profile.providers["PERSONALITY"]
+                nsfw_filter_llm = LLMClient.from_provider(nsfw_filter_provider)
+
+                response = await nsfw_filter_llm.send_request(
+                    prompt=Prompt(messages=[
+                        {
+                            "role": "user", 
+                            "content": f"Generate lyrics for a song in the following style: {style}. You may use [chorus] and [verse] tags to structure the lyrics, within brackets"
+                        }
+                    ]),
+                    params=LLMRequestParams(model_name="gemini-3-flash", temperature=1)
+                )
+                lyrics = response.message.content
+            except Exception:
+                await interaction.response.send_message("ERROR: could not generate AI lyrics")
+                pass
+    
         if len(style) < 10 or len(lyrics) < 10:
             await interaction.response.send_message("⚠️ Style and lyrics must have at least 10 characters each")
             return
@@ -51,7 +71,12 @@ class MusicGenCommand(BaseFalCommand):
             if not url:
                 raise ValueError("ERROR: Missing audio URL in API response")
 
-            return await self._download_media(url, "generated_song.mp3")
+            title = "" 
+            for c in lyrics[:16].lower():
+                if c.isalnum() or c == ' ':
+                    title += c
+            title = title.replace(" ", "_")
+            return await self._download_media(url, f"{title}.mp3")
 
         display_prompt = f"**Style:** {style}\n**Lyrics:** {lyrics[:50]}..."
         await self._execute_generation(
