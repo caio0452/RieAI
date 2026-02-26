@@ -49,7 +49,7 @@ class MusicGenCommand(BaseFalCommand):
                             "content": f"Generate lyrics for a song in the following style: {style}. You may use [chorus] and [verse] tags to structure the lyrics, within brackets"
                         }
                     ]),
-                    params=LLMRequestParams(model_name="gemini-3-flash", temperature=1)
+                    params=LLMRequestParams(model_name="google/gemini-3-flash-preview", temperature=1)
                 )
                 lyrics = response.message.content
             except Exception as e:
